@@ -21,7 +21,11 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.splineBasedDecay
@@ -164,7 +168,7 @@ fun Home() {
     val lazyListState = rememberLazyListState()
 
     // The background color. The value is changed by the current tab.
-    val backgroundColor by animateColorAsState (if (tabPage == TabPage.Home) Purple100 else Green300 )
+    val backgroundColor by animateColorAsState(if (tabPage == TabPage.Home) Purple100 else Green300)
 
 
     // The coroutine scope for event handlers calling suspend functions.
@@ -278,7 +282,7 @@ private fun HomeFloatingActionButton(
             )
             // Toggle the visibility of the content with animation.
             // TODO 2-1: Animate this visibility change.
-            AnimatedVisibility (extended) {
+            AnimatedVisibility(extended) {
                 Text(
                     text = stringResource(R.string.edit),
                     modifier = Modifier
@@ -299,13 +303,13 @@ private fun EditMessage(shown: Boolean) {
     AnimatedVisibility(
         visible = shown,
         enter = slideInVertically(
-            initialOffsetY = {fullHeight: Int -> -fullHeight },
+            initialOffsetY = { fullHeight: Int -> -fullHeight },
             animationSpec = tween(durationMillis = 150, easing = LinearOutSlowInEasing)
         ),
-        exit = slideOutVertically (
-            targetOffsetY = {fullHeight: Int -> -fullHeight },
+        exit = slideOutVertically(
+            targetOffsetY = { fullHeight: Int -> -fullHeight },
             animationSpec = tween(durationMillis = 250, easing = FastOutLinearInEasing)
-                )
+        )
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
@@ -459,9 +463,36 @@ private fun HomeTabIndicator(
     tabPage: TabPage
 ) {
     // TODO 4: Animate these value changes.
-    val indicatorLeft = tabPositions[tabPage.ordinal].left
-    val indicatorRight = tabPositions[tabPage.ordinal].right
+    val transition = updateTransition(targetState = tabPage, "Tab Indicator")
+    val indicatorLeft by transition.animateDp(
+        transitionSpec = {
+            if (TabPage.Home isTransitioningTo TabPage.Work) {
+                spring(stiffness = Spring.StiffnessVeryLow)
+            } else {
+                spring(stiffness = Spring.StiffnessMedium)
+            }
+        },
+        label = "Tab Indicator"
+    ) { page ->
+        tabPositions[page.ordinal].left
+    }
+
+    val indicatorRight by transition.animateDp(
+
+        transitionSpec = {
+            if (TabPage.Home isTransitioningTo TabPage.Work) {
+                spring(stiffness = Spring.StiffnessMedium)
+            } else {
+                spring(stiffness = Spring.StiffnessVeryLow)
+            }
+        },
+        label = "Indicator right"
+    ) { page ->
+        tabPositions[page.ordinal].right
+    }
     val color = if (tabPage == TabPage.Home) Purple700 else Green800
+
+
     Box(
         Modifier
             .fillMaxSize()
